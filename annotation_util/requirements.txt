@@ -1,0 +1,5 @@
+opencv-python
+face_alignment # 68 landmarks (2D)
+pillow
+torchvision
+scikit-image
