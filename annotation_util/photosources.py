@@ -30,8 +30,9 @@ class DirectorySource:
 
 
 class VideoSource:
-    def __init__(self, filename):
+    def __init__(self, filename, strobe):
         self.filename = filename
+        self.strobe = strobe
         print(f"\nFile '{filename}' will be processed")
         self.cap = cv2.VideoCapture(filename)
         if not self.cap.isOpened():
@@ -39,9 +40,10 @@ class VideoSource:
             exit(1)
 
     def next(self):
-        ret, frame = self.cap.read()
-        if ret:
-            print("new frame")
-            return None, frame
-        else:
-            raise StopIteration
+        for i in range(self.strobe):
+            ret, frame = self.cap.read()
+            if not ret:
+                raise StopIteration
+        print("new frame")
+        return None, frame
+

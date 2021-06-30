@@ -20,6 +20,7 @@ import photosources
 argparser = argparse.ArgumentParser(description='Utility for automatic face annotations: 68 2D-points + head angles')
 argparser.add_argument('--photos_dir', default='', help='Path to photos to process')
 argparser.add_argument('--video_file', default='', help='Path to video to process')
+argparser.add_argument('--video_strobe', type=int, default=2, help='Strobe step for video in frames')
 argparser.add_argument('--angles_model', default='./models/hopenet_robust_alpha1.pkl',
                        help='Path to angles prediction model, \
                        download link can be found here: https://github.com/natanielruiz/deep-head-pose')
@@ -58,7 +59,7 @@ idx_tensor = torch.FloatTensor(idx_tensor).cuda(gpu)
 if args.photos_dir and args.video_file == '':
     photos_source = photosources.DirectorySource(args.photos_dir)
 if args.video_file:
-    photos_source = photosources.VideoSource(args.video_file)
+    photos_source = photosources.VideoSource(args.video_file, args.video_strobe)
 
 while True:
     try:
@@ -85,6 +86,7 @@ while True:
                 annotations = []
 
                 for i in range(len(bboxes)):
+                    print(f" - face # {i}")
                     box = [int(item) for item in bboxes[i]]
                     # Angles prediction
                     x_min = box[0]
@@ -119,7 +121,7 @@ while True:
                     yaw_predicted = torch.sum(yaw_predicted.data[0] * idx_tensor) * 3 - 99
                     pitch_predicted = torch.sum(pitch_predicted.data[0] * idx_tensor) * 3 - 99
                     roll_predicted = torch.sum(roll_predicted.data[0] * idx_tensor) * 3 - 99
-                    print(f" - pitch: {pitch_predicted:.0f}, yaw: {yaw_predicted:.0f}, roll: {roll_predicted:.0f}")
+                    print(f"   pitch: {pitch_predicted:.1f}, yaw: {yaw_predicted:.1f}, roll: {roll_predicted:.1f}")
 
                     # Visualization and serialization
                     if args.visualize:
