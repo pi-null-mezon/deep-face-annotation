@@ -20,7 +20,8 @@ import photosources
 argparser = argparse.ArgumentParser(description='Utility for automatic face annotations: 68 2D-points + head angles')
 argparser.add_argument('--photos_dir', default='', help='Path to photos to process')
 argparser.add_argument('--video_file', default='', help='Path to video to process')
-argparser.add_argument('--video_strobe', type=int, default=2, help='Strobe step for video in frames')
+argparser.add_argument('--videos_dir', default='', help='Path to videos to process')
+argparser.add_argument('--video_strobe', type=int, default=5, help='Strobe step for video in frames')
 argparser.add_argument('--angles_model', default='./models/hopenet_robust_alpha1.pkl',
                        help='Path to angles prediction model, \
                        download link can be found here: https://github.com/natanielruiz/deep-head-pose')
@@ -30,7 +31,7 @@ argparser.add_argument('--maxdim', type=int, default=1000,
                        help='Max image dimension, images with greater values will be resized')
 args = argparser.parse_args()
 
-if not args.photos_dir and not args.video_file:
+if not args.photos_dir and not args.video_file and not args.videos_dir:
     print("Neither dir with photos or video file was passed as input! Abort...")
     exit(1)
 
@@ -57,7 +58,9 @@ idx_tensor = [idx for idx in range(66)]
 idx_tensor = torch.FloatTensor(idx_tensor).cuda(gpu)
 
 if args.photos_dir and args.video_file == '':
-    photos_source = photosources.DirectorySource(args.photos_dir)
+    photos_source = photosources.PhotoDirectorySource(args.photos_dir)
+if args.videos_dir:
+    photos_source = photosources.VideoDirectorySource(args.videos_dir, args.video_strobe)
 if args.video_file:
     photos_source = photosources.VideoSource(args.video_file, args.video_strobe)
 
@@ -81,7 +84,10 @@ while True:
                 print(f" - no faces found")
             else:
                 landmarks = results[0]
-                bboxes = results[1]
+                bboxes = results[2]
+                if bboxes is None:
+                    print(f" - no faces found")
+                    continue
                 print(f" - faces detected: {len(bboxes)}")
                 annotations = []
 
